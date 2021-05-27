@@ -25,7 +25,7 @@ export class DbService {
     this.platform.ready().then(() => {
       this.sqlite
         .create({
-          name: 'positronx_db.db',
+          name: 'pokedex_db.db',
           location: 'default',
         })
         .then((db: SQLiteObject) => {
@@ -69,7 +69,7 @@ export class DbService {
             items.push({
               id: res.rows.item(i).id,
               uid: res.rows.item(i).uid,
-              photo_route: res.rows.item(i).photo_route,
+              gender: res.rows.item(i).gender,
             });
           }
         }
@@ -96,11 +96,11 @@ export class DbService {
   }
 
   // Add
-  addUser(uid, photo_route) {
-    let data = [uid, photo_route];
+  addUser(uid, gender) {
+    let data = [uid, gender];
     return this.storage
       .executeSql(
-        'INSERT INTO user (uid, photo_route) VALUES (?, ?)',
+        'INSERT INTO user (uid, gender) VALUES (?, ?)',
         data
       )
       .then((res) => {
@@ -125,20 +125,23 @@ export class DbService {
     return this.storage
       .executeSql('SELECT * FROM user WHERE uid = ?', [uid])
       .then((res) => {
-        return {
-          id: res.rows.item(0).id,
-          uid: res.rows.item(0).uid,
-          photo_route: res.rows.item(0).photo_route,
-        };
+        if (res) {
+          return {
+            id: res.rows.item(0).id,
+            uid: res.rows.item(0).uid,
+            gender: res.rows.item(0).gender,
+          };
+        }
+        return null;
       });
   }
 
   // Update
   updateUser(user: User) {
-    let data = [user.photo_route];
+    let data = [user.gender];
     return this.storage
       .executeSql(
-        `UPDATE user SET photo_route = ? WHERE uid = ${user.uid}`,
+        `UPDATE user SET gender = ? WHERE uid = ${user.uid}`,
         data
       )
       .then((data) => {

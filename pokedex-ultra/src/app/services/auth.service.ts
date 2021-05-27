@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { User } from '../shared/user.interface';
 import { AngularFireAuth } from '@angular/fire/auth';
 import * as firebase from 'firebase/app';
+import { DbService } from './../services/db.service';
+import { Router } from '@angular/router';
 
 import { AngularFirestore, AngularFirestoreDocument } from '@angular/fire/firestore';
 import { Observable, of } from 'rxjs';
@@ -13,7 +15,10 @@ import { map, switchMap, take, tap } from 'rxjs/operators';
 export class AuthService {
   public user$: Observable<User>;
 
-  constructor(public afAuth:AngularFireAuth, private afs: AngularFirestore) { 
+  constructor(private db: DbService, 
+    public afAuth: AngularFireAuth, 
+    private afs: AngularFirestore, 
+    private router: Router) { 
     this.user$ = this.afAuth.authState.pipe(
       switchMap((user: User) => {
         //this.afAuth.currentUser.then(user => console.log(user.displayName))
@@ -33,26 +38,13 @@ export class AuthService {
       })
     )
 
-    /*
     this.afAuth.onAuthStateChanged((user) => {
       if (user){
         console.log(user);
-        const currUser: User = {
-          uid: user.uid,
-          email: user.email,
-          displayName: user.displayName,
-          emailVerified: user.emailVerified,
-        };
-        console.log(currUser)
-        console.log(this.user$)
-        this.user$.pipe(
-          map(user => console.log('fuck')),
-          tap(user => console.log('fuck'))
-        )
       } else {
-        console.log('muerto');
+        this.router.navigate(['/login']);
       }
-    })*/
+    })
   }
 
   async sendVerificationEmail(): Promise<void> {
@@ -79,6 +71,15 @@ export class AuthService {
     try {
       const { user } = await this.afAuth.signInWithPopup(new firebase.default.auth.GoogleAuthProvider());
       this.updateUserData(user);
+      let oldUser;
+      this.db.getUser(firebase.default.auth().currentUser.uid).then(
+        (res) => {
+          oldUser = res;
+        }
+      );
+      if (!oldUser) {
+        this.db.addUser(firebase.default.auth().currentUser.uid, 'n');
+      }
       return user;
     } catch(err) { 
       console.log('Error ->', err);
@@ -89,6 +90,15 @@ export class AuthService {
     try {
       const { user } = await this.afAuth.signInWithEmailAndPassword(email, password);
       this.updateUserData(user);
+      let oldUser;
+      this.db.getUser(firebase.default.auth().currentUser.uid).then(
+        (res) => {
+          oldUser = res;
+        }
+      );
+      if (!oldUser) {
+        this.db.addUser(firebase.default.auth().currentUser.uid, 'n');
+      }
       return user;
     } catch(err) { 
       console.log('Error ->', err);
@@ -98,7 +108,7 @@ export class AuthService {
   async logout(): Promise<void> {
     try {
       console.log('logout');
-      await this.afAuth.signOut;
+      await this.afAuth.signOut();
     } catch(err) { 
       console.log('Error ->', err);
     }

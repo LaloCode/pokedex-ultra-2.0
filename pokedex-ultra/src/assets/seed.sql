@@ -12,3 +12,4 @@ CREATE TABLE IF NOT EXISTS favorite_pkmn(
 
 INSERT or IGNORE INTO user(id, uid, gender) VALUES (1, 'xd', 'm');
 INSERT or IGNORE INTO favorite_pkmn(id, pkmn_id, user) VALUES (1, 1, 1);
+INSERT or IGNORE INTO favorite_pkmn(id, pkmn_id, user) VALUES (1, 2, 1);
